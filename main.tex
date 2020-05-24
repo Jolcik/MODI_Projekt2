@@ -1,0 +1,662 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{polski}
+\usepackage{graphicx}
+\usepackage{mathtools}
+\usepackage{amsmath}
+\usepackage{color, colortbl}
+\usepackage{diagbox}
+
+\title{MODI projekt nr 2}
+\author{Piotr Kostrzeński}
+\date{nr indeksu 300421}
+
+\begin{document}
+
+\maketitle
+
+\section*{Zadanie 1 - Identyfikacja modeli statycznych}
+\section*{a)}
+Dane statyczne zostały zaimportowane z dostarczonego pliku tekstowego. Wyglądają one następująco: \\
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_wszystkie.png}
+
+\clearpage \noindent
+Dane uczące oraz weryfikujące zostały losowo podzielone według zasady: $75\%$ - dane uczące oraz $25\%$ - dane weryfikujące. Po przedstawieniu na wykresie dane wyglądają nastepująco: \\
+\includegraphics[width=0.98\textwidth]{MODI_projekt2_zad1_uczace.png} \\
+\includegraphics[width=0.98\textwidth]{MODI_projekt2_zad1_weryfikujace.png}
+
+\clearpage \noindent
+Porównanie obu zbiorów danych przedstawia sie jak poniżej: \\
+\includegraphics[width=0.98\textwidth]{MODI_projekt2_zad1_porownanie.png}
+
+\noindent
+Jak widać na wykresie, dane zostały mniej więcej równomiernie rozdzielone. Pozwala to na w miarę obiektywne ocenienie poprawności działania algorytmu.
+
+
+\section*{b)}
+Zadany statyczny model liniowy jest postaci:
+\[ y(u) = a_0 + a_1u \]
+
+\noindent
+Jego parametry zostaną zidentyfikowane metodą najmniejszych kwadratów. Błąd modelu jest wyliczany ze wzoru:
+\[ E = \frac{1}{P} \sum_{i=1}^{P}(y^{mod}(i) - y(i))^2 \]
+\noindent
+gdzie $P$ - liczba próbek w zbiorze, a $y^{mod}(i)$ jest wyjściem modelu dla $i$-tej próbki danych.
+
+\clearpage \noindent
+Dla wszystkich P próbek danych w postaci wektorowo-macierzowej ogólny model dla tego przypadku wygląda następująco: \\
+\begin{equation*}
+    \begin{bmatrix}
+        y(1) \\
+        y(2) \\
+        \vdots \\
+        y(P)
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        1 & u(1) \\
+        1 & u(2) \\
+        \vdots & \vdots \\
+        1 & u(P) \\
+    \end{bmatrix}
+    \begin{bmatrix}
+        a_0 \\
+        a_1 \\
+    \end{bmatrix}
+\end{equation*}
+
+\noindent
+Nazwy wektorów/macierzy to kolejno: $y, M, w$. Wtedy na podstawie $y$ i $M$ wektor $w$ jest równy:
+\[ w = (M^T M)^{-1} M^T y \]
+\noindent
+W MATLABie to działanie można efektywnie policzyć z pomocą tzw. lewego dzielenia:
+\[ w = M \backslash y \]
+
+\noindent
+Po załadowaniu danych oraz przeprowadzeniu obliczeń uzyskano wartości parametrów:
+\begin{equation*}
+    \begin{bmatrix}
+        a_0 \\
+        a_1
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        -7,0571 \\
+        -0,6539
+    \end{bmatrix}
+\end{equation*}
+
+\noindent
+Błędy zbiorów uczącego i weryfikującego wyniosły:
+\[ E_{ucz} = 2,6679\]
+\[ E_{wer} = 2,4275\]
+
+\noindent
+W takim przypadku, charaketerystyku $y(u)$ modelu wygląda następująco: \\
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_b.png}
+
+\clearpage \noindent
+Na tle zbiorów uczącego i weryfikującego charakterystyka modelu przedstawia się jak niżej: \\
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_b_uczace.png} \\
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_b_weryfikujace.png}
+
+\clearpage \noindent
+Jak można zauważyć, wyznaczona charakterystyka całkiem dobrze odpowiada zadanemu zbiorowi uczącemu (oczywiście na tyle na ile może to robić linia prosta). Potwierdza to poprawność implementacji algorytmu. Niestety, ze względu na to, że model jest tylko liniowy, nie jesteśmy w stanie osiągnąć idealnego odwzorowania - do tego trzeba użyć modeli nieliniowych.
+
+\section*{c)}
+Tym razem zostaną sprawdzone zostane statyczne modele nieliniowe w postaci:
+\[
+    y(u) = a_0 + \sum_{i=1}^{N}a_i u^i
+\]
+gdzie $N$ - stopień użytego wielomianu.
+
+\noindent
+Wtedy, w postaci wektorowo-macierzowej ogólny model wygląda następująco: \\ \\
+\begin{equation*}
+    \begin{bmatrix}
+        y(1) \\
+        y(2) \\
+        \vdots \\
+        y(P)
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        1 & u(1) & u^2(1) & \dots & u^N(1) \\
+        1 & u(2) & u^2(2) & \dots & u^N(2) \\
+        \vdots & \vdots & \vdots & \ddots & \vdots \\
+        1 & u(P) & u^2(P) & \dots & u^N(P) \\\\
+    \end{bmatrix}
+    \begin{bmatrix}
+        a_0 \\
+        a_1 \\
+        a_2 \\
+        \vdots \\
+        a_N
+    \end{bmatrix}
+\end{equation*} 
+\noindent
+\\ Taką macierz tworzę w MATLABie używając poniższych funkcji:
+\begin{verbatim}
+    M = ones(ile_uczacych, n+1);
+    for i = 1:n
+        M(:, i+1) = dane_uczace(:, 1).^(i);
+    end
+\end{verbatim}
+
+\noindent
+Na następnych stronach przedstawiono wykresy przedstawiające otrzymane modele dla różnych stopni $N$ wielomianu aproksymującego.
+
+\clearpage \noindent
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_c_1_ucz.png} \\ \\
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_c_1_wer.png}
+
+\clearpage \noindent
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_c_2_ucz.png} \\ \\
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_c_2_wer.png}
+
+\clearpage \noindent
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_c_3_ucz.png} \\ \\
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_c_3_wer.png}
+
+\clearpage \noindent
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_c_4_ucz.png} \\ \\
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_c_4_wer.png}
+
+\clearpage \noindent
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_c_5_ucz.png} \\ \\
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_c_5_wer.png}
+
+\clearpage \noindent
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_c_6_ucz.png} \\ \\
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_c_6_wer.png}
+
+\clearpage \noindent
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_c_7_ucz.png} \\ \\
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_c_7_wer.png}
+
+\clearpage \noindent
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_c_8_ucz.png} \\ \\
+\includegraphics[width=\textwidth]{MODI_projekt2_zad1_c_8_wer.png}
+
+\clearpage \noindent
+Sprawdzono także przypadki dla wyższych stopni wielomianu $N$, ale wizualnie są one praktycznie identyczne (co można już zauważyć w obecnych wykresach), dlatego ich wykresy nie zostały zamieszczone. \\
+
+\noindent
+Dla każdego przypadku sprawdzono także błąd modelu dla zbioru uczącego oraz weryfikującego. Zostały one przedstawione w tabeli poniżej:
+
+\definecolor{Gray}{gray}{0.9}
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{| c | c | c |}
+        \hline
+        $N$ & $E_{ucz}$ & $E_{wer}$ \\
+        \hline
+        1 & 2,6679 & 2,4275 \\
+        2 & 1,8206 & 1,9554 \\
+        3 & 0,2261 & 0,2292 \\
+        4 & 0,0602 & 0,0670 \\
+        5 & 0,0591 & 0,0666 \\
+        6 & 0,0591 & 0,0661 \\ 
+        \rowcolor{Gray} 7 & 0,0568 & 0,0662 \\
+        8 & 0,0567 & 0,0678 \\
+        9 & 0,0563 & 0,0686 \\
+        10 & 0,0563 & 0,0686 \\
+        11 & 0,0562 & 0,0686 \\
+        12 & 0,0561 & 0,0693 \\
+        \hline
+    \end{tabular}
+    \caption{Błędy dla zbiorów uczącego i weryfikującego dla różnych $N$}
+    \label{tab:my_label}
+\end{table}
+
+\noindent
+Na podstawie otrzymanych błędów można zobaczyć, że dla pierwszych czterech stopni wielomianu spadek błędów jest zdecydowanie największy. Oznacza to, że są one najbardziej znaczące w tym przypadku. \\
+
+\noindent
+Co do dalszych stopni, błąd zbioru uczącego maleje cały czas ze wzrostem stopnia wielomianu $N$. Prawdą jest jednak, że dla $N > 4$ ten spadek jest bardzo mały, nawet w granicy błędu/szumu. Dla błędu zbioru weryfikującego sytuacja jest trochę ciekawsza. Można zauważyć, że dla $N > 6$ błąd zamiast maleć, wzrasta. Oznacza to, że dla wyższych stopni model gorzej odpowiada punktom zbioru weryfikującego, a w związku z tym gorzej aproksymuje funkcję dla tej części zbioru. \\
+
+\noindent
+Na podstawie tych danych najlepszy model statyczny to według mnie model dla stopnia $\boldsymbol{N = 7}$. Daje on najlepszy kompromis między błędem zbioru uczącego oraz weryfikującego. Taki model będzie najdokładniej aproksymował charakterystykę $y(u)$. Ze względów praktycznych można jednak też wziąć pod uwagę model dla $N = 4$. Błędy dla obu zbiorów są dla niego tylko trochę większe, a żeby go otrzymać należy przeprowadzić dużo mniej obliczeń (kolejnych działań potęgowania do nawet 7 stopnia). Stąd, gdybyśmy posiadali ograniczoną moc obliczeniową lub taki model trzeba by było ciągle i bardzo szybko obliczyć (np. w przypadku ciagłych zmian dostarczanych danych), taki model mógłby działać sprawniej niż dokładniejszy model $N = 7$.
+
+
+\section*{Zadanie 2 - Identyfikacja modeli dynamicznych}
+Na samym początku przystąpiłem do wizualizacji otrzymanych danych. Wyglądają one następująco, zbiór uczący: 
+\begin{center}
+    \includegraphics[width=0.92\textwidth]{modi_projekt2_zad2a_uczace.png} 
+\end{center}
+oraz zbiór weryfikujacy: 
+\begin{center}
+    \includegraphics[width=0.92\textwidth]{modi_projekt2_zad2a_weryfikujace.png}
+\end{center}
+
+
+\section*{b)}
+W ramach drugiego podpunktu drugiego zadania metodą najmniejszych kwadratów wyznaczę dynamiczne modele liniowe postaci:
+\[
+    y(k) = \sum_{i=1}^{n_B}b_iu(k-i) + \sum_{i=1}^{n_A}a_iy(k-i)
+\]
+pierwszego ($n_A = n_B = 1$), drugiego ($n_A = n_B = 2$) i trzeciego rzedu ($n_A = n_B = 3$). Dla $P$ próbek danych oraz modelu pierwszego rzędu mamy zatem w postaci wektorowo-macierzowej:
+\begin{equation*}
+    \begin{bmatrix}
+        y(2) \\
+        y(3) \\
+        \vdots \\
+        y(P)
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        u(1) & y(1) \\
+        u(2) & y(2) \\
+        \vdots & \vdots \\
+        u(P-1) & y(P-1) \\
+    \end{bmatrix}
+    \begin{bmatrix}
+        b \\
+        a \\
+    \end{bmatrix}
+\end{equation*}
+\noindent
+dla rzędu drugiego:
+\begin{equation*}
+    \begin{bmatrix}
+        y(3) \\
+        y(4) \\
+        \vdots \\
+        y(P)
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        u(2) & u(1) & y(2) & y(1) \\
+        u(3) & u(2) & y(3) & y(2) \\
+        \vdots & \vdots & \vdots & \vdots \\
+        u(P-1) & u(P-2) & y(P-1) & y(P-2) \\
+    \end{bmatrix}
+    \begin{bmatrix}
+        b_1 \\
+        b_2 \\
+        a_1 \\
+        a_2
+    \end{bmatrix}
+\end{equation*}
+\noindent
+oraz analogicznie dla trzeciego rzędu:
+\begin{equation*}
+    \begin{bmatrix}
+        y(4) \\
+        y(5) \\
+        \vdots \\
+        y(P)
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        u(3) & u(2) & u(1) & y(3) & y(2) & y(1) \\
+        u(4) & u(3) & u(2) & y(4) & y(3) & y(2) \\
+        \vdots & \vdots & \vdots & \vdots & \vdots & \vdots \\
+        u(P-1) & u(P-2) & u(P-3) & y(P-1) & y(P-2) & y(P-3) \\
+    \end{bmatrix}
+    \begin{bmatrix}
+        b_1 \\
+        b_2 \\
+        b_3 \\
+        a_1 \\
+        a_2 \\
+        a_3
+    \end{bmatrix}
+\end{equation*}
+
+\noindent
+gdzie wypisanymi macierzami są kolejno $y, M$ oraz $w$. Do znalezienia parametrów wektora $w$ ponownie wykorzystam błąd średniokwadratowy:
+\[ E = \frac{1}{P} \sum_{i=1}^{P}(y^{mod}(i) - y(i))^2 \]
+\noindent
+gdzie $P$ - liczba próbek w zbiorze, a $y^{mod}(i)$ jest wyjściem modelu dla $i$-tej próbki danych. Wtedy na podstawie $y$ i $M$ wektor $w$ jest równy:
+\[ w = (M^T M)^{-1} M^T y \]
+\noindent
+W MATLABie to działanie można efektywnie policzyć z pomocą tzw. lewego dzielenia:
+\[ w = M \backslash y \]
+
+\noindent
+Przystąpiono zatem do wyznaczenia parametrów dla zadanych rzędów w trybie bez rekurencji (ARX) oraz z rekurencją (OE). Wyniki otrzymanego modelu przedstawiono na poniższych wykresach, na początku w trybie bez rekurencji ARX:
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{modi_projekt2_zad2b_ucz_bez_rekurencji_1.png}
+\end{center}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{modi_projekt2_zad2b_wer_bez_rekurencji_1.png}
+\end{center}
+
+\begin{center}
+    \includegraphics[width=\textwidth]{modi_projekt2_zad2b_ucz_bez_rekurencji_2.png}
+\end{center}
+\\
+\begin{center}
+    \includegraphics[width=\textwidth]{modi_projekt2_zad2b_wer_bez_rekurencji_2.png}
+\end{center}
+
+\begin{center}
+    \includegraphics[width=\textwidth]{modi_projekt2_zad2b_ucz_bez_rekurencji_3.png}
+\end{center}
+\\
+\begin{center}
+    \includegraphics[width=\textwidth]{modi_projekt2_zad2b_wer_bez_rekurencji_3.png}
+\end{center}
+
+\clearpage \noindent
+Oraz w trybie z rekurencją OE:
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{modi_projekt2_zad2b_ucz_rekurencja_1.png}
+\end{center}
+\begin{center}
+    \includegraphics[width=0.95\textwidth]{modi_projekt2_zad2b_wer_rekurencja_1.png}
+\end{center}
+
+\begin{center}
+    \includegraphics[width=\textwidth]{modi_projekt2_zad2b_ucz_rekurencja_2.png}
+\end{center}
+\begin{center}
+    \includegraphics[width=\textwidth]{modi_projekt2_zad2b_wer_rekurencja_2.png}
+\end{center}
+
+\begin{center}
+    \includegraphics[width=\textwidth]{modi_projekt2_zad2b_ucz_rekurencja_3.png}
+\end{center}
+\begin{center}
+    \includegraphics[width=\textwidth]{modi_projekt2_zad2b_wer_rekurencja_3.png}
+\end{center}
+
+\clearpage \noindent
+Błędy dla konkretnych wersji modelu zostały przedstawione w tabeli poniżej:
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{| c | c | c | c | c |}
+        \hline
+        $n$ & $E_{ucz} - ARX$ & $E_{wer} - ARX$ & $E_{ucz} - OE$ & $E_{wer} - OE$ \\
+        \hline
+        1 & 0,0356 & 0,0384 & 3,7782 & 3,8776 \\
+        2 & 0,0350 & 0,0379 & 3,7772 & 3,8674 \\
+        3 & 0,0325 & 0,0343 & 3,6664 & 3,7836\\
+        \hline
+    \end{tabular}
+    \caption{Błędy dla zbiorów uczącego i weryfikującego dla różnych $n$ w trybie ARX oraz OE}
+    \label{tab:my_label}
+\end{table}
+
+\noindent
+Pierwszą rzeczą, która można zauważyć jest to że model w trybie ARX (bez rekurencji) ma dużo mniejszy błąd niż w trybie OE (z rekurencją). Jest to dosyć logiczne, można się tego spodziewać, jako że w trybie bez rekurencji bazujemy cały czas na prawdziwych danych. Dlatego aproksymacja wartości wyjścia $y(k)$ jest dużo lepsza. \\
+
+\noindent
+Co do samego modelu w trybie ARX widać, że błąd wraz ze wzrostem rzędu modelu cały czas maleje. Jednak poprawa tego błędu nie jest specjalnie duża, błąd maleje, ale nieszczególnie dużo - tak samo w przypadku obu zbiorów. Sprawdziłem także modele wyższych rzędów i z każdym kolejnym rzędem dokładność rośnie, ale np. między 9, a 10 rzędem różnica błędu to jedna tysięczna, także są to bardzo małe poprawy. \\
+
+\noindent
+Co do modelu w trybie OE - jasno widać, że dużo gorzej odtwarza on wartość wyjścia $y(k)$. Liczbowa wartość błędu także jest dużo większa. Najciekawsze rzeczy się dzieją kiedy rzeczywista wartość wyjścia obiektu szybko maleje. Mozna zauważyć, że model liniowy "nie wyrabia się" z nadążaniem za spadkiem. Może to sugerować, że model liniowy po prostu nie nadaje się do zamodelowania tego obiektu. \\
+
+\noindent
+Wartość błędu modelu w trybie OE spada wraz ze wzrostem rzędu, ale te spadki nie są duże. Dalej ten błąd jest dużo większy niż dla modelu w trybie ARX. Sprawdziłem zachowanie modelu dla wyższych rzędów i minimalny błąd dla zbioru uczącego wyniósł $2,9874$ dla modelu siódmego rzędu. Dla wyższych rzędów błąd modelu zaczął się zwiększać, co oznacza że lepszego wyniku nie dostaniemy. Potwierdza to tezę, że model liniowy po prostu nie jest odpowiedni dla tego obiektu. \\
+
+\noindent
+Ostatecznie, najlepszy model pod względem dokładności jest model trzeciego rzędu. Ze sprawdzonych modeli zapewnia on najlepszą dokładność aproksymacji wyjścia obiektu.
+
+
+
+\clearpage
+\section*{c)}
+W tym podpunkcie sprawdzono modele analogiczne do pudpunktu b), ale z różna strukturą nieliniowości. Sprawdzono także modele o wyższym rzędzie dynamiki. \\
+
+\noindent
+Przykładowo, model o dynamice pierwszego rzędu i drugim stopniu wielomianu będzie wyglądał następująco:
+\[
+    y(k) = w_1u(k-1) + w_2u^2(k-1) + w_3y(k-1) w_4y^2(k-1)
+\]
+a dla drugiego rzędu dynamiki i drugiego stopnia wielomianu:
+\begin{multline*}
+    y(k) = w_1u(k-1) + w_2u^2(k-1) + w_3u(k-2) + w_4u^2(k-2) + w_5y(k-1) + \\ + w_6y^2(k-1) + w_7y(k-2) + w_8y^2(k-2)
+\end{multline*}
+i tak dalej. \\
+
+\noindent
+Poniżej przedstawiono wykresy przebiegów modeli oraz obiektu dla stopnia dynamiki $D$ oraz stopnia wielomianu $N$ od 1 do 5 w trybie bez rekurencji (ARX) oraz z rekurencją (OE) \\
+
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_bez_rekurencji_D1_N1.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_bez_rekurencji_D1_N2.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_bez_rekurencji_D1_N3.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_bez_rekurencji_D1_N4.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_bez_rekurencji_D1_N5.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_bez_rekurencji_D2_N1.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_bez_rekurencji_D2_N2.png} \\
+
+\clearpage \noindent
+Reszta wykresów dla trybu bez rekurencji wygląda dokładnie tak samo jak te już zamieszczone. W tym trybie te wykresy praktycznie zawsze dobrze wyglądają, dlatego oszczędzę dodawania kolejnych takich samych wykresów i od razu przejdę do trybu z rekurencją, który najbardziej nas interesuje. Stąd, wykresy dla trybu z rekurencją:
+\begin{center}
+    \includegraphics[width=0.9\textwidth]{modi_projekt2_zad2c_rekurencja_D1_N1.png}
+\end{center}
+\begin{center}
+    \includegraphics[width=0.9\textwidth]{modi_projekt2_zad2c_rekurencja_D1_N2.png}
+\end{center}
+
+\noindent
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D1_N3.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D1_N4.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D1_N5.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D2_N1.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D2_N2.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D2_N3.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D2_N4.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D2_N5.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D3_N1.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D3_N2.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D3_N3.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D3_N4.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D3_N5.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D4_N1.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D4_N2.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D4_N3.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D4_N4.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D4_N5.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D5_N1.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D5_N2.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D5_N3.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D5_N4.png} \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2c_rekurencja_D5_N5.png} \\
+
+\noindent
+Jak można zauważyć, dodanie nieliniowych wyrazów do modelu pozwala ostatecznie na osiągnięcie modelu, który jest dokładny w trybie rekurencji (w porównaniu do podpunktu $b)$ ). \\
+
+\noindent
+Na pierwszy rzut oka zdecydowanie widać poprawę dla modeli w trybie rekurencji. Stopień wielomianu aproksymującego pozwala na otrzymanie zdecydowanie lepszych efektów niż przy samym zwiększeniu rzędu dynamiki modelu. Wstępnie potwierdza to przypuszczenie z poprzedniego podpunktu, czyli że specyfika zadanego obiektu jest nieliniowa. \\
+
+\noindent
+Na bardziej ilościowe spojrzenie na poprawność modeli pozwoli porównanie błędów dla sprawdzonych modeli, które zostało przedstawione poniżej.
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{| c || c | c | c | c | c |}
+        \hline
+        \backslashbox{D}{N} & $1$ & $2$ & $3$ & $4$ & 5 \\
+        \hline \hline
+        1 &0.0356 &0.0316 &0.0274 &0.0270 &0.0270 \\
+        \hline
+        2 &0.0350 &0.0287 &0.0216 &0.0208 &0.0207 \\
+        \hline
+        3 &0.0325 &0.0271 &0.0189 &0.0178 &0.0177 \\
+        \hline
+        4 &0.0299 &0.0263 &0.0175 &0.0158 &0.0157 \\
+        \hline
+        5 &0.0267 &0.0245 &0.0169 &0.0147 &0.0146 \\
+        \hline
+    \end{tabular}
+    \caption{Błędy dla zbioru uczącego w trybie ARX}
+    \label{tab:my_label}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{| c || c | c | c | c | c |}
+        \hline
+        \backslashbox{D}{N} & $1$ & $2$ & $3$ & $4$ & 5 \\
+        \hline \hline
+        1 &0.0384 &0.0353 &0.0285 &0.0275 &0.0276 \\
+        \hline
+        2 &0.0379 &0.0318 &0.0225 &0.0209 &0.0209 \\
+        \hline
+        3 &0.0344 &0.0293 &0.0196 &0.0177 &0.0179 \\
+        \hline
+        4 &0.0304 &0.0276 &0.0191 &0.0165 &0.0168 \\
+        \hline
+        5 &0.0279 &0.0255 &0.0188 &0.0159 &0.0163 \\
+        \hline
+    \end{tabular}
+    \caption{Błędy dla zbioru weryfikującego w trybie ARX}
+    \label{tab:my_label}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{| c || c | c | c | c | c |}
+        \hline
+        \backslashbox{D}{N} & $1$ & $2$ & $3$ & $4$ & 5 \\
+        \hline \hline
+        1 &3.7801 &1.4768 &0.1353 &0.0516 &0.0525 \\
+        \hline
+        2 &3.7809 &1.4632 &0.0905 &0.0292 &0.0298 \\
+        \hline
+        3 &3.6719 &1.4823 &0.0601 &0.0188 &0.0194 \\
+        \hline
+        4 &3.5243 &1.5022 &0.0522 &0.0155 &0.0158 \\
+        \hline
+        5 &3.2825 &1.5508 &0.0480 &0.0140 &0.0140 \\
+        \hline
+    \end{tabular}
+    \caption{Błędy dla zbioru uczącego w trybie OE}
+    \label{tab:my_label}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{| c || c | c | c | c | c |}
+        \hline
+        \backslashbox{D}{N} & $1$ & $2$ & $3$ & $4$ & 5 \\
+        \hline \hline
+        1 &3.8796 &2.4435 &0.2474 &0.0665 &0.0708 \\
+        \hline
+        2 &3.8713 &2.3417 &0.1683 &0.0358 &0.0387 \\
+        \hline
+        3 &3.7893 &2.2561 &0.1075 &0.0217 &0.0254 \\
+        \hline
+        4 &3.6885 &2.2268 &0.0911 &0.0180 &0.0199 \\
+        \hline
+        5 &3.5272 &2.2214 &0.0810 &0.0162 &0.0164 \\
+        \hline
+    \end{tabular}
+    \caption{Błędy dla zbioru weryfikującego w trybie OE}
+    \label{tab:my_label}
+\end{table}
+
+\noindent
+Dla trybu bez rekurencji (ARX) widać w miarę podobny spadek błędu wraz ze wzrostem rzędu dynamiki $D$ oraz stopnia wielomianu $N$. Spadki błędu nie są duże - wynika to najprawdopodobniej z tego powodu, że w model w trybie ARX i tak bardzo dobrze aproksymują zachowanie obiektu. Zwiększanie dokładności już dokładnego modelu nie będzie dawało szczególnie efektownych rezultatów. \\
+
+\noindent
+W przypadku modeli w trybie z rekurencją (OE) widać dużo większe poprawy dokładności modelu wraz ze wzrostem stopnia wielomianu aproksymującego. Największe spadki są między $N=1$, a $N=2$ oraz $N=2$, a $N=3$. Dalej spadek błędu ma miejsce, aż do 5 stopnia wielomianu gdzie błąd zaczyna się zwiększać. Sugeruje to, że to stopień wielomianu $N=4$ będzie najlepszym stopniem dla modelu. \\
+
+\noindent
+Co do rzędu dynamiki - ogólnie widać, że dokładność modelu cały czas rośnie waz ze wzrostem rzędu. Spadki błędu w tym przypadku nie są jednak tak duże jak przy zmianie stopnia wielomianu. Dla sprawdzonych danych, najlepszy będzie rząd dynamiki $D=5$. Ewentualnie można się zastanowić jeszcze nad opcją $D=4$, ponieważ zmniejszenie stopnia znacząco zmienia liczbę zmiennych modelu, a różnica w błędzie dla obu przypadków nie jest specjalnie duża (kilka tysięcznych). \\
+
+\noindent
+Dla pewności jednak modele w trybie OE sprawdzę dla wyższych rzędów dynamiki $D$ oraz stopni wielomianu $N$:
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{| c || c | c | c | c | c | c | c | c |}
+        \hline
+        \backslashbox{D}{N} & $1$ & $2$ & $3$ & $4$ & 5 & 6 & 7 & 8 \\
+        \hline \hline
+        1 &3.7801 &1.4768 &0.1353 &0.0516 &0.0525 &0.0515 &0.0518 &0.0504 \\
+        \hline
+        2 &3.7809 &1.4632 &0.0905 &0.0292 &0.0298 &0.0302 &0.0303 &0.0296 \\
+        \hline
+        3 &3.6719 &1.4823 &0.0601 &0.0188 &0.0194 &0.0198 &0.0196 &0.0191 \\
+        \hline
+        4 &3.5243 &1.5022 &0.0522 &0.0155 &0.0158 &0.0161 &0.0159 &0.0156 \\
+        \hline
+        5 &3.2825 &1.5508 &0.0480 &0.0140 &0.0140 &0.0140 &0.0140 &0.0139 \\
+        \hline
+        6 &3.0834 &1.5838 &0.0470 &0.0135 &0.0135 &0.0134 &0.0134 &0.0133 \\
+        \hline
+        7 &2.9979 &1.7046 &0.0444 &0.0133 &0.0132 &0.0131 &0.0131 &0.0130 \\
+        \hline
+        8 &3.0112 &1.7702 &0.0436 &0.0131 &0.0130 &0.0129 &0.0129 &0.0128 \\
+        \hline
+    \end{tabular}
+    \caption{Błędy dla zbioru uczącego w trybie OE}
+    \label{tab:my_label}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{| c || c | c | c | c | c | c | c | c |}
+        \hline
+        \backslashbox{D}{N} & $1$ & $2$ & $3$ & $4$ & 5 & 6 & 7 & 8 \\
+        \hline \hline
+        1 &3.8796 &2.4435 &0.2474 &0.0665 &0.0708 &0.0971 &0.2179 &0.3033 \\
+        \hline
+        2 &3.8713 &2.3417 &0.1683 &0.0358 &0.0387 &0.0556 &0.1273 &0.1851 \\
+        \hline
+        3 &3.7893 &2.2561 &0.1075 &0.0217 &0.0254 &0.0344 &0.0672 &0.0940 \\
+        \hline
+        4 &3.6885 &2.2268 &0.0911 &0.0180 &0.0199 &0.0251 &0.0444 &0.0611 \\
+        \hline
+        5 &3.5272 &2.2214 &0.0810 &0.0162 &0.0164 &0.0182 &0.0290 &0.0364 \\
+        \hline
+        6 &3.4199 &2.2147 &0.0780 &0.0150 &0.0152 &0.0161 &0.0240 &0.0321 \\
+        \hline
+        7 &3.3976 &2.2244 &0.0732 &0.0150 &0.0151 &0.0155 &0.0396 &0.0306 \\
+        \hline
+        8 &3.3755 &2.2391 &0.0716 &0.0147 &0.0150 &0.0150 &0.0343 & - \\
+        \hline
+    \end{tabular}
+    \caption{Błędy dla zbioru weryfikującego w trybie OE}
+    \label{tab:my_label}
+\end{table}
+
+\noindent
+Sprawdzenie dalszych stopni potwierdziło, że dla dalszych rzędów dynamiki cały czas zwiększamy dokładność modelu (ale bardzo niewiele). Dla wyższych stopni $N$ wielomianu widać, także że ewidentnie powyżej 4 stopnia następuje stopniowy spadek dokładności modelu. \\
+
+\noindent
+Ostatecznie jako najlepszy model wybieramy model o rzędzie dynamiki $D=5$ oraz stopniu wielomianu $N=4$. Zapewnia on bardzo dobrą dokładność modelu z zachowaniem w miarę optymalnej ilości parametrów.
+
+
+\clearpage
+\section*{d)}
+Na podstawie wyznaczonego w zadaniu 2c najlepszego dynamicznego modelu nieliniowego wyznaczę teraz statyczny model nieliniowy. \\
+
+\noindent
+W przypadku modelu statycznego przyjmujemy, że:
+\[
+    y(k) = y(k-1) = y(k-2) = ... = y
+\]
+\[
+    u(k) = u(k-1) = u(k-2) = ... = u
+\]
+Stąd, kod wyznaczający wartość y przyjmie trochę inną postać:
+\begin{verbatim}
+    y = 0;
+    for j = 1:D
+        for k = 1:N
+            u_w = N*(j-1)+k;
+            y_w = D*N+N*(j-1)+k;
+            y = y + w(u_w)*(u^k);
+            y = y + w(y_w)*(y_wejsciowe^k);
+        end
+    end
+\end{verbatim}
+Jako, że wyznaczenie statycznego modelu na podstawie nieliniowego modelu analitycznie jest bardzo trudne, zostanie on wyznaczony numerycznie. Zrobię to z pomocą MATLABowego polecenia \texttt{fsolve} licząc wartość dla 50 punktów w zakresie $<-1, 1>$. Efekt wygląda nastepująco: \\
+\includegraphics[width=\textwidth]{modi_projekt2_zad2d.png}
+
+\clearpage \noindent
+Otrzymana charakterystyka $y(u)$ statycznego zgadza się z charakterystyką wyznaczoną w zadaniu pierwszym. Dowodzi to poprawności wyznaczonej w tym podpunkcie charakterystyki. Zgadza się także ona także z zachowaniem obiektu, które można zaobserwować w dostarczonych zestawach danych. Po zmianie wartości sygnału sterującego, wyjście obiektu po jakimś czasie stablizuje się na wartościach widocznych w wyznaczonej charakterystyce statycznej.
+
+\begin{flushright}
+Dziękuję za przeczytanie \\
+Piotr Kostrzeński
+\end{flushright}
+
+\end{document}
+ 
